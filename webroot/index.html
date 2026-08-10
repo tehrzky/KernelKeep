@@ -1,33 +1,149 @@
-<!-- Add these inside the content div after the summary-grid -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>KernelKeep</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
 
-<!-- Stats Card -->
-<div class="stats-card" style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:16px;">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-    <div style="font-weight:700;">📊 Protection Stats</div>
-    <button id="refreshStats" class="log-btn">⟳ Refresh</button>
+  <!-- HOME -->
+  <div class="page active" id="page-home">
+    <div class="content">
+      <div class="home-header">
+        <div class="home-title">KernelKeep</div>
+      </div>
+      <div class="status-card" id="statusCard">
+        <div class="status-title" id="statusTitle">KernelKeep is running</div>
+        <div class="status-meta" id="statusMeta">Version 2.2.0</div>
+        <span class="status-badge running" id="statusBadge">Running</span>
+      </div>
+      
+      <div class="summary-grid">
+        <div class="summary-card">
+          <div class="summary-icon" style="background:var(--green-dim);color:var(--green)">&#x1F6E1;</div>
+          <div class="summary-label">Protected Apps</div>
+          <div class="summary-value" id="protectedCount">0</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)">&#x1F4F1;</div>
+          <div class="summary-label">Installed</div>
+          <div class="summary-value" id="installedCount">0</div>
+        </div>
+      </div>
+
+      <!-- Stats Card -->
+      <div class="stats-card" style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <div style="font-weight:700;">📊 Protection Stats</div>
+          <button id="refreshStats" class="log-btn">⟳ Refresh</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center;">
+          <div><div style="font-size:24px;font-weight:800;color:var(--green);" id="statsApplied">0</div><div style="font-size:12px;color:var(--text-secondary);">Applied</div></div>
+          <div><div style="font-size:24px;font-weight:800;color:var(--red);" id="statsFailed">0</div><div style="font-size:12px;color:var(--text-secondary);">Failed</div></div>
+          <div><div style="font-size:12px;color:var(--text-secondary);" id="statsLastRun">Never</div><div style="font-size:12px;color:var(--text-secondary);">Last Run</div></div>
+        </div>
+      </div>
+
+      <!-- Kill History -->
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:16px;">
+        <div style="font-weight:700;margin-bottom:8px;">💀 Kill History</div>
+        <pre id="killHistoryView" style="background:#0d0d0d;border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px;font-size:11px;color:var(--text-secondary);max-height:100px;overflow-y:auto;white-space:pre-wrap;word-break:break-word;font-family:monospace;">Loading...</pre>
+      </div>
+
+      <!-- Verification & Export Buttons -->
+      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+        <button id="verifyBtn" class="btn-pill add" style="background:var(--blue);color:#fff;">✓ Verify</button>
+        <button id="exportBtn" class="btn-pill" style="background:var(--elevated);color:var(--text);">📤 Export</button>
+        <button id="importBtn" class="btn-pill" style="background:var(--elevated);color:var(--text);">📥 Import</button>
+      </div>
+
+      <div class="section-title">System Info</div>
+      <div class="info-card">
+        <div class="info-row"><span class="info-label">Device</span><span class="info-value" id="infoDevice">&#x2014;</span></div>
+        <div class="info-row"><span class="info-label">Android</span><span class="info-value" id="infoAndroid">&#x2014;</span></div>
+        <div class="info-row"><span class="info-label">OEM</span><span class="info-value" id="infoOEM">&#x2014;</span></div>
+        <div class="info-row"><span class="info-label">Kernel</span><span class="info-value" id="infoKernel">&#x2014;</span></div>
+        <div class="info-row"><span class="info-label">Module</span><span class="info-value">v2.2.0</span></div>
+      </div>
+    </div>
   </div>
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center;">
-    <div><div style="font-size:24px;font-weight:800;color:var(--green);" id="statsApplied">0</div><div style="font-size:12px;color:var(--text-secondary);">Applied</div></div>
-    <div><div style="font-size:24px;font-weight:800;color:var(--red);" id="statsFailed">0</div><div style="font-size:12px;color:var(--text-secondary);">Failed</div></div>
-    <div><div style="font-size:12px;color:var(--text-secondary);" id="statsLastRun">Never</div><div style="font-size:12px;color:var(--text-secondary);">Last Run</div></div>
+
+  <!-- APPS -->
+  <div class="page" id="page-apps">
+    <div class="content">
+      <div class="search-wrap">
+        <div class="search-bar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+          </svg>
+          <input type="text" id="appSearch" placeholder="Search apps or package..." autocomplete="off">
+        </div>
+      </div>
+
+      <div class="section-title">💤 Hibernate List <span class="count-pill" id="hibernateCount">0</span></div>
+      <div class="app-list" id="hibernateList">
+        <div class="empty-state"><div class="empty-title">No hibernated apps</div><div>Add from the app list below</div></div>
+      </div>
+
+      <div class="section-title">Protected Apps <span class="count-pill" id="savedCount">0</span></div>
+      <div class="app-list" id="savedList">
+        <div class="empty-state"><div class="empty-title">No protected apps</div><div>Add apps from below</div></div>
+      </div>
+
+      <div class="section-title">Installed Applications <span class="count-pill" id="appsCount">0</span></div>
+      <div class="chip-row">
+        <button class="chip" data-filter="user" id="chipUser">User</button>
+        <button class="chip" data-filter="system" id="chipSystem">System</button>
+        <button class="chip active" data-filter="all" id="chipAll">All</button>
+      </div>
+      <div class="app-list" id="appsList">
+        <div class="loading-row"><span class="spinner"></span> Loading apps...</div>
+      </div>
+    </div>
   </div>
-</div>
 
-<!-- Verification & Export Buttons -->
-<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
-  <button id="verifyBtn" class="btn-pill add" style="background:var(--blue);color:#fff;">✓ Verify</button>
-  <button id="exportBtn" class="btn-pill" style="background:var(--elevated);color:var(--text);">📤 Export</button>
-  <button id="importBtn" class="btn-pill" style="background:var(--elevated);color:var(--text);">📥 Import</button>
-</div>
+  <!-- LOGS -->
+  <div class="page" id="page-logs">
+    <div class="content">
+      <div class="log-card">
+        <div class="log-header">
+          <span class="log-title">Boot Log</span>
+          <button class="log-btn" id="btnClearLog">Clear</button>
+        </div>
+        <pre class="log-view" id="logView">Loading...</pre>
+      </div>
+    </div>
+  </div>
 
-<!-- Kill History -->
-<div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:16px;">
-  <div style="font-weight:700;margin-bottom:8px;">💀 Kill History</div>
-  <pre id="killHistoryView" style="background:#0d0d0d;border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px;font-size:11px;color:var(--text-secondary);max-height:100px;overflow-y:auto;white-space:pre-wrap;word-break:break-word;font-family:monospace;">Loading...</pre>
-</div>
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" id="navHome">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+      </svg>
+      <span>Home</span>
+    </button>
+    <button class="nav-item" id="navApps">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+        <rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>
+      </svg>
+      <span>Apps</span>
+    </button>
+    <button class="nav-item" id="navLogs">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+      </svg>
+      <span>Logs</span>
+    </button>
+  </nav>
 
-<!-- Hibernate List Section -->
-<div class="section-title">💤 Hibernate List <span class="count-pill" id="hibernateCount">0</span></div>
-<div class="app-list" id="hibernateList">
-  <div class="empty-state"><div class="empty-title">No hibernated apps</div><div>Add from the app list below</div></div>
+  <div class="toast" id="toast"></div>
 </div>
+<script src="app.js"></script>
+</body>
+</html>
