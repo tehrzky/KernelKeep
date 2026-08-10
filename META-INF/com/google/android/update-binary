@@ -1,0 +1,21 @@
+#!/sbin/sh
+#################
+# Magisk module installer stub. Do not edit.
+# Delegates to Magisk's module installer, which sources customize.sh.
+#################
+umask 022
+OUTFD=$2
+ZIPFILE=$3
+mount /data 2>/dev/null
+
+# Locate and load Magisk's util_functions
+for MAGISKBIN in /data/adb/magisk /data/magisk /sbin/.magisk/busybox; do
+  [ -f "$MAGISKBIN/util_functions.sh" ] && break
+done
+if [ ! -f "$MAGISKBIN/util_functions.sh" ]; then
+  echo "! Cannot find Magisk. Install/enable Magisk first." >&"$OUTFD"
+  exit 1
+fi
+. "$MAGISKBIN/util_functions.sh"
+install_module
+exit 0
