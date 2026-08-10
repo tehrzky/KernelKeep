@@ -197,4 +197,45 @@ function renderApps() {
         ? '<button class="btn-pill saved" data-action="remove" data-pkg="' + pkg + '">Remove</button>'
         : '<button class="btn-pill add" data-action="add" data-pkg="' + pkg + '">Protect</button>';
     } else {
-      if (!
+      if (!isSaved && !isHibernated) {
+        buttons = '<button class="btn-pill add" data-action="add" data-pkg="' + pkg + '">Protect</button>' +
+                  '<button class="btn-pill" style="background:var(--orange-dim);color:var(--orange);" data-action="hibernate" data-pkg="' + pkg + '">💤</button>';
+      } else if (isSaved && !isHibernated) {
+        buttons = '<button class="btn-pill saved" data-action="remove" data-pkg="' + pkg + '">Remove</button>' +
+                  '<button class="btn-pill" style="background:var(--orange-dim);color:var(--orange);" data-action="hibernate" data-pkg="' + pkg + '">💤</button>';
+      } else if (!isSaved && isHibernated) {
+        buttons = '<button class="btn-pill add" data-action="add" data-pkg="' + pkg + '">Protect</button>' +
+                  '<button class="btn-pill" style="background:var(--red-dim);color:var(--red);" data-action="unhibernate" data-pkg="' + pkg + '">💤 Remove</button>';
+      } else {
+        buttons = '<button class="btn-pill saved" data-action="remove" data-pkg="' + pkg + '">Remove</button>' +
+                  '<button class="btn-pill" style="background:var(--red-dim);color:var(--red);" data-action="unhibernate" data-pkg="' + pkg + '">💤 Remove</button>';
+      }
+    }
+
+    html += '<div class="app-row" data-pkg="' + pkg + '">' +
+      '<div class="app-icon" id="ai-' + sid + '">' +
+        '<span style="display:flex;align-items:center;justify-content:center;width:48px;height:48px;background:#333;color:#fff;font-size:20px;font-weight:700;border-radius:12px;">?</span>' +
+      '</div>' +
+      '<div class="app-meta">' +
+        '<div class="app-name" id="al-' + sid + '">' + label + '</div>' +
+        '<div class="app-pkg">' + pkg + '</div>' +
+        '<div class="app-badges">' + badges + '</div>' +
+      '</div>' +
+      '<div style="display:flex;gap:4px;flex-shrink:0;">' + buttons + '</div>' +
+    '</div>';
+  }
+  container.innerHTML = html;
+  
+  for (var i = 0; i < filtered.length; i++) {
+    var pkg = filtered[i].pkg;
+    var sid = pkg.replace(/[^a-zA-Z0-9]/g, '-');
+    renderAppIcon(pkg, 'ai-' + sid);
+    if (!labelCache[pkg]) {
+      (async function(p) {
+        var lbl = await fetchLabel(p);
+        var el = document.getElementById('al-' + p.replace(/[^a-zA-Z0-9]/g, '-'));
+        if (el) el.textContent = lbl;
+      })(pkg);
+    }
+  }
+}
