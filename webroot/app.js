@@ -1,38 +1,28 @@
-// DKMA Monster WebUI
-// Uses legacy ksu.exec() API with callbacks (DeepDoze/AshLooper pattern)
+// KernelKeep WebUI
+// Uses ksu.exec() API with callbacks
 
 (function() {
   'use strict';
 
-  const LIST_PATH = '/data/adb/dkma/apps.list';
-  const LOG_PATH  = '/data/adb/dkma/dkma.log';
+  const LIST_PATH = '/data/adb/kernelkeep/apps.list';
+  const LOG_PATH  = '/data/adb/kernelkeep/kernelkeep.log';
 
   let savedApps = [];
   let allApps   = [];
   let currentFilter = 'all';
   let labelCache = {};
   let iconCache  = {};
-  let hasRoot = true;
 
-  // ═══ EXEC WRAPPER (legacy ksu.exec API) ═══
+  // ═══ EXEC WRAPPER (KernelSU WebUI API) ═══
   function exec(cmd) {
     return new Promise(function(resolve) {
       if (typeof ksu === 'undefined' || typeof ksu.exec !== 'function') {
-        hasRoot = false;
-        resolve({ errno: -1, stdout: '', stderr: 'no root bridge' });
+        resolve({ errno: -1, stdout: '', stderr: 'ksu.exec not available' });
         return;
       }
-      const name = 'cb_' + Date.now() + '_' + Math.floor(Math.random() * 1e6);
-      window[name] = function(errno, stdout, stderr) {
-        delete window[name];
+      ksu.exec(cmd, function(errno, stdout, stderr) {
         resolve({ errno: errno, stdout: stdout || '', stderr: stderr || '' });
-      };
-      try {
-        ksu.exec(cmd, '{}', name);
-      } catch (e) {
-        delete window[name];
-        resolve({ errno: -1, stdout: '', stderr: String(e) });
-      }
+      });
     });
   }
 
@@ -64,12 +54,12 @@
 
   // ═══ DEVICE INFO ═══
   async function loadDeviceInfo() {
-    var manuf  = (await exec("getprop ro.product.manufacturer")).out.trim();
-    var model  = (await exec("getprop ro.product.model")).out.trim();
-    var android = (await exec("getprop ro.build.version.release")).out.trim();
-    var sdk    = (await exec("getprop ro.build.version.sdk")).out.trim();
-    var kernel = (await exec("uname -r")).out.trim();
-    var arch   = (await exec("getprop ro.product.cpu.abi")).out.trim();
+    var manuf  = (await exec("getprop ro.product.manufacturer")).stdout.trim();
+    var model  = (await exec("getprop ro.product.model")).stdout.trim();
+    var android = (await exec("getprop ro.build.version.release")).stdout.trim();
+    var sdk    = (await exec("getprop ro.build.version.sdk")).stdout.trim();
+    var kernel = (await exec("uname -r")).stdout.trim();
+    var arch   = (await exec("getprop ro.product.cpu.abi")).stdout.trim();
 
     document.getElementById('infoDevice').textContent = manuf + ' ' + model;
     document.getElementById('infoAndroid').textContent = 'API ' + sdk + ' (' + android + ')';
@@ -81,9 +71,9 @@
   // ═══ LABELS & ICONS ═══
   async function fetchLabel(pkg) {
     if (labelCache[pkg]) return labelCache[pkg];
-    var apk = (await exec('pm path "' + pkg + '" 2>/dev/null | head -1 | cut -d: -f2')).out.trim();
+    var apk = (await exec('pm path "' + pkg + '" 2>/dev/null | head -1 | cut -d: -f2')).stdout.trim();
     if (!apk) { labelCache[pkg] = pkg; return pkg; }
-    var label = (await exec('aapt dump badging "' + apk + '" 2>/dev/null | grep "application-label:" | head -1 | cut -d\' + "'" + ' -f2')).out.trim();
+    var label = (await exec('aapt dump badging "' + apk + '" 2>/dev/null | grep "application-label:" | head -1 | cut -d\' + "'" + ' -f2')).stdout.trim();
     if (!label) label = pkg;
     labelCache[pkg] = label;
     return label;
@@ -91,11 +81,11 @@
 
   async function fetchIcon(pkg) {
     if (iconCache[pkg]) return iconCache[pkg];
-    var apk = (await exec('pm path "' + pkg + '" 2>/dev/null | head -1 | cut -d: -f2')).out.trim();
+    var apk = (await exec('pm path "' + pkg + '" 2>/dev/null | head -1 | cut -d: -f2')).stdout.trim();
     if (!apk) return null;
-    var paths = (await exec('unzip -l "' + apk + '" 2>/dev/null | grep -E "mipmap-.*ic_launcher\.(png|webp)" | awk '{print $4}' | sort -t- -k2 -r')).out.trim().split('\n').filter(function(p) { return p && !p.endsWith('.xml'); });
+    var paths = (await exec('unzip -l "' + apk + '" 2>/dev/null | grep -E "mipmap-.*ic_launcher\.(png|webp)" | awk \'{print $4}\' | sort -t- -k2 -r')).stdout.trim().split('\n').filter(function(p) { return p && !p.endsWith('.xml'); });
     for (var i = 0; i < paths.length; i++) {
-      var b64 = (await exec('unzip -p "' + apk + '" "' + paths[i] + '" 2>/dev/null | base64 -w 0')).out.trim();
+      var b64 = (await exec('unzip -p "' + apk + '" "' + paths[i] + '" 2>/dev/null | base64 -w 0')).stdout.trim();
       if (b64 && b64.length > 100) {
         var uri = 'data:image/' + (paths[i].endsWith('.webp') ? 'webp' : 'png') + ';base64,' + b64;
         iconCache[pkg] = uri;
@@ -122,7 +112,7 @@
   // ═══ DATA LOADING ═══
   async function loadSavedApps() {
     var res = await exec('cat "' + LIST_PATH + '" 2>/dev/null');
-    savedApps = res.out.split('\n').map(function(l){ return l.trim(); }).filter(function(l){ return l && !l.startsWith('#'); });
+    savedApps = res.stdout.split('\n').map(function(l){ return l.trim(); }).filter(function(l){ return l && !l.startsWith('#'); });
     document.getElementById('savedCount').textContent = savedApps.length;
     document.getElementById('protectedCount').textContent = savedApps.length;
   }
@@ -130,8 +120,8 @@
   async function loadInstalledApps() {
     var u = await exec("pm list packages -3");
     var s = await exec("pm list packages -s");
-    var up = u.out.split('\n').map(function(l){ return l.replace('package:', '').trim(); }).filter(Boolean);
-    var sp = s.out.split('\n').map(function(l){ return l.replace('package:', '').trim(); }).filter(Boolean);
+    var up = u.stdout.split('\n').map(function(l){ return l.replace('package:', '').trim(); }).filter(Boolean);
+    var sp = s.stdout.split('\n').map(function(l){ return l.replace('package:', '').trim(); }).filter(Boolean);
     allApps = [];
     up.forEach(function(p){ allApps.push({pkg: p, type: 'user'}); });
     sp.forEach(function(p){ allApps.push({pkg: p, type: 'system'}); });
@@ -257,7 +247,7 @@
   }
 
   async function writeList() {
-    var lines = ['# DKMA Monster — one package per line', '# Lines starting with # are ignored', ''];
+    var lines = ['# KernelKeep — one package per line', '# Lines starting with # are ignored', ''];
     lines.push.apply(lines, savedApps);
     await exec("cat > '" + LIST_PATH + "' <<'EOF'\n" + lines.join('\n') + "\nEOF");
   }
@@ -304,7 +294,7 @@
   // ═══ LOGS ═══
   async function loadLogs() {
     var res = await exec('cat "' + LOG_PATH + '" 2>/dev/null || echo "No logs yet. Reboot to generate."');
-    document.getElementById('logView').textContent = res.out || 'Log is empty.';
+    document.getElementById('logView').textContent = res.stdout || 'Log is empty.';
   }
 
   document.getElementById('btnClearLog').addEventListener('click', async function() {
