@@ -182,8 +182,8 @@ head -5 "$LIST" | grep -v '^#' | while read -r PKG; do
 done
 
 # 5. Update stats
-TOTAL_APPLIED=$(grep -c "applied:" "$LOG")
-FAILED=$(grep -c "failed" "$LOG")
+TOTAL_APPLIED=$(grep -c "applied:" "$LOG" 2>/dev/null || echo 0)
+FAILED=$(grep -c "failed" "$LOG" 2>/dev/null || echo 0)
 echo "{\"total_applied\":$TOTAL_APPLIED,\"failed\":$FAILED,\"last_run\":\"$(date)\"}" > "$STATS"
 
 # 6. Start schedule re-apply (runs in background)
