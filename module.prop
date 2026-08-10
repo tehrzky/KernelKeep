@@ -1,6 +1,6 @@
-id=dkma_monster-ksu-v2
-name=DKMA Monster (Keep My Apps Alive)
+id=dkma
+name=KernelKeep
 version=v2.0.0
-versionCode=20000
-author=DKMA Monster, tehrzky
-description=Universal Don't-Kill-My-App enforcer. On every boot it re-applies Doze whitelist, standby buckets, and background/autostart appops for the apps you list in /data/adb/dkma/apps.list — so aggressive OEM battery managers can't kill them.
+versionCode=2
+author=tehrzky
+description=Keep your chosen apps alive by preventing Doze and background restrictions.
