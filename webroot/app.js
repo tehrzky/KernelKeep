@@ -12,6 +12,7 @@
   let currentFilter = 'all';
   let labelCache = {};
   let iconCache  = {};
+  let verifying = false;
 
   // ═══ EXEC WRAPPER (KernelSU WebUI API) ═══
   function exec(cmd) {
@@ -65,26 +66,46 @@
     document.getElementById('infoAndroid').textContent = 'API ' + sdk + ' (' + android + ')';
     document.getElementById('infoOEM').textContent = manuf || 'Unknown';
     document.getElementById('infoKernel').textContent = kernel;
-    document.getElementById('statusMeta').textContent = 'Version 2.0.0 (' + arch + ')';
+    document.getElementById('statusMeta').textContent = 'Version 2.1.0 (' + arch + ')';
   }
 
-  // ═══ LABELS & ICONS ═══
+  // ═══ LABELS (Improved - uses dumpsys as fallback) ═══
   async function fetchLabel(pkg) {
     if (labelCache[pkg]) return labelCache[pkg];
-    var apk = (await exec('pm path "' + pkg + '" 2>/dev/null | head -1 | cut -d: -f2')).stdout.trim();
-    if (!apk) { labelCache[pkg] = pkg; return pkg; }
-    var label = (await exec('aapt dump badging "' + apk + '" 2>/dev/null | grep "application-label:" | head -1 | cut -d\' + "'" + ' -f2')).stdout.trim();
-    if (!label) label = pkg;
+    
+    var label = pkg;
+    
+    // Method 1: Try dumpsys (more reliable)
+    var res = await exec('dumpsys package "' + pkg + '" 2>/dev/null | grep -A1 "applicationInfo" | grep -E "labelRes|nonLocalizedLabel" | head -1');
+    var match = res.stdout.match(/nonLocalizedLabel=([^ ]+)/);
+    if (match && match[1]) {
+      label = match[1].replace(/[{}]/g, '').trim();
+    }
+    
+    // Method 2: If dumpsys fails, try aapt (requires aapt installed)
+    if (label === pkg) {
+      var apk = (await exec('pm path "' + pkg + '" 2>/dev/null | head -1 | cut -d: -f2')).stdout.trim();
+      if (apk) {
+        var labelRes = (await exec('aapt dump badging "' + apk + '" 2>/dev/null | grep "application-label:" | head -1 | cut -d\' + "'" + ' -f2')).stdout.trim();
+        if (labelRes) label = labelRes;
+      }
+    }
+    
     labelCache[pkg] = label;
     return label;
   }
 
+  // ═══ ICONS (Improved with better fallback) ═══
   async function fetchIcon(pkg) {
     if (iconCache[pkg]) return iconCache[pkg];
+    
     var apk = (await exec('pm path "' + pkg + '" 2>/dev/null | head -1 | cut -d: -f2')).stdout.trim();
     if (!apk) return null;
-    var paths = (await exec('unzip -l "' + apk + '" 2>/dev/null | grep -E "mipmap-.*ic_launcher\.(png|webp)" | awk \'{print $4}\' | sort -t- -k2 -r')).stdout.trim().split('\n').filter(function(p) { return p && !p.endsWith('.xml'); });
-    for (var i = 0; i < paths.length; i++) {
+    
+    // Try to find launcher icon
+    var paths = (await exec('unzip -l "' + apk + '" 2>/dev/null | grep -E "mipmap-.*ic_launcher\\.(png|webp)" | awk \'{print $4}\' | sort -t- -k2 -r')).stdout.trim().split('\n').filter(function(p) { return p && !p.endsWith('.xml'); });
+    
+    for (var i = 0; i < Math.min(paths.length, 3); i++) {
       var b64 = (await exec('unzip -p "' + apk + '" "' + paths[i] + '" 2>/dev/null | base64 -w 0')).stdout.trim();
       if (b64 && b64.length > 100) {
         var uri = 'data:image/' + (paths[i].endsWith('.webp') ? 'webp' : 'png') + ';base64,' + b64;
@@ -225,6 +246,7 @@
     }
   }
 
+  // ═══ ADD/REMOVE APPS ═══
   async function addApp(pkg) {
     if (savedApps.includes(pkg)) { toast('Already saved'); return; }
     savedApps.push(pkg);
@@ -252,6 +274,28 @@
     await exec("cat > '" + LIST_PATH + "' <<'EOF'\n" + lines.join('\n') + "\nEOF");
   }
 
+  // ═══ VERIFY FEATURE ═══
+  async function verifyApps() {
+    if (verifying) return;
+    verifying = true;
+    toast('Verifying...');
+    
+    var results = [];
+    for (var i = 0; i < savedApps.length; i++) {
+      var pkg = savedApps[i];
+      var res = await exec('dumpsys deviceidle whitelist | grep "' + pkg + '"');
+      if (res.stdout.trim()) {
+        results.push('✓ ' + pkg + ': whitelisted');
+      } else {
+        results.push('✗ ' + pkg + ': NOT whitelisted');
+      }
+    }
+    
+    var msg = results.join('\n');
+    alert('Verification Results:\n\n' + (msg || 'No apps to verify'));
+    verifying = false;
+  }
+
   // ═══ SEARCH & FILTER ═══
   document.getElementById('appSearch').addEventListener('input', function(){
     if (document.getElementById('page-apps').classList.contains('active')) renderApps();
@@ -276,7 +320,7 @@
     renderApps();
   });
 
-  // ═══ DELEGATED CLICK HANDLERS FOR ADD/REMOVE ═══
+  // ═══ DELEGATED CLICK HANDLERS ═══
   document.getElementById('savedList').addEventListener('click', function(e) {
     var btn = e.target.closest('[data-action="remove"]');
     if (!btn) return;
@@ -301,6 +345,17 @@
     await exec('> "' + LOG_PATH + '"');
     loadLogs();
     toast('Logs cleared');
+  });
+
+  // ═══ VERIFY BUTTON (Add to Home page) ═══
+  // Add a verify button dynamically
+  document.addEventListener('DOMContentLoaded', function() {
+    var statusCard = document.getElementById('statusCard');
+    var verifyBtn = document.createElement('button');
+    verifyBtn.textContent = 'Verify Settings';
+    verifyBtn.style.cssText = 'background:var(--elevated);color:var(--text);border:1px solid var(--border);border-radius:100px;padding:8px 20px;font-size:13px;font-weight:700;cursor:pointer;margin-top:12px;';
+    verifyBtn.addEventListener('click', verifyApps);
+    statusCard.appendChild(verifyBtn);
   });
 
   // ═══ INIT ═══
