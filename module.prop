@@ -1,6 +1,6 @@
 id=kernelkeep
 name=KernelKeep
-version=v2.1.0
-versionCode=3
+version=v2.2.0
+versionCode=4
 author=tehrzky
-description=Keep your apps alive by preventing Doze and background restrictions.
+description=Keep apps alive, hibernate battery drainers, and monitor protection stats.
