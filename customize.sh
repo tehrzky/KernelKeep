@@ -7,12 +7,22 @@ ui_print " | |/ / | | / _ \| \| |/ _ \| | / / / _ \| _ \| \| |/ _ \ "
 ui_print " | ' <  | |/ /_\ \ .  | /_\ \ |/ / | /_\ |  _/| .  | /_\ | "
 ui_print " |_|\_\ |_|\____/|_|\_|\____/|___/  \____/|_|  |_|\_|\____/ "
 ui_print " "
-ui_print "- Installing KernelKeep keep-alive enforcer"
+ui_print "- Installing KernelKeep v2.2.0"
+ui_print ""
+
+# ═══ SAFETY: Bootloop recovery instructions ═══
+ui_print "⚠️  SAFETY NOTES:"
+ui_print "  - If you experience bootloop, reboot into safe mode"
+ui_print "  - The module will auto-disable after 3 failed boots"
+ui_print "  - To manually disable: touch /data/adb/kernelkeep/safe_mode"
+ui_print "  - System critical apps are ALWAYS skipped"
+ui_print "  - No hardware modifications are made"
+ui_print ""
 
 # Create data directory
 mkdir -p /data/adb/kernelkeep
 
-# Create default apps.list if missing
+# Create default apps.list
 if [ ! -f /data/adb/kernelkeep/apps.list ]; then
   cat > /data/adb/kernelkeep/apps.list <<'EOF'
 # KernelKeep — add one package name per line, then reboot.
@@ -20,15 +30,15 @@ if [ ! -f /data/adb/kernelkeep/apps.list ]; then
 # com.your.app
 EOF
   ui_print "- Created /data/adb/kernelkeep/apps.list"
-  ui_print "  Edit it and add your package names, then reboot."
 else
   ui_print "- Existing apps.list kept."
 fi
 
-# Create default hibernate.list if missing
+# Create default hibernate.list
 if [ ! -f /data/adb/kernelkeep/hibernate.list ]; then
   cat > /data/adb/kernelkeep/hibernate.list <<'EOF'
 # KernelKeep — Hibernate List
+# SAFETY: System apps are automatically removed from this list.
 # Apps here will have their background activity blocked.
 # Icon stays on launcher, app only runs when opened.
 # Example:
@@ -72,7 +82,7 @@ EOF
 chmod 755 "$MODPATH/refresh_cache.sh"
 ui_print "- Created refresh_cache.sh"
 
-# Pre-generate cache (runs in background to avoid install delay)
+# Pre-generate cache (runs in background)
 sh "$MODPATH/refresh_cache.sh" &
 ui_print "- Generating app cache in background..."
 
@@ -81,6 +91,7 @@ set_perm_recursive "$MODPATH" 0 0 0755 0644
 set_perm "$MODPATH/service.sh" 0 0 0755
 set_perm "$MODPATH/refresh_cache.sh" 0 0 0755
 
+ui_print ""
 ui_print "- Done. Reboot to activate."
 ui_print "  Logs: /data/adb/kernelkeep/kernelkeep.log"
 ui_print "  Cache: /data/adb/kernelkeep/apps.cache"
