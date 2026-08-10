@@ -9,33 +9,39 @@
 <body>
 <div class="app">
 
-  <!-- HOME -->
+  <!-- ===== HOME TAB ===== -->
   <div class="page active" id="page-home">
     <div class="content">
       <div class="home-header">
-        <div class="home-title">KernelKeep</div>
+        <div class="home-title">⚡ KernelKeep</div>
+        <div class="home-subtitle">v2.2.0</div>
       </div>
+
       <div class="status-card" id="statusCard">
-        <div class="status-title" id="statusTitle">KernelKeep is running</div>
-        <div class="status-meta" id="statusMeta">Version 2.2.0</div>
-        <span class="status-badge running" id="statusBadge">Running</span>
+        <div class="status-title" id="statusTitle">🟢 Running</div>
+        <div class="status-meta" id="statusMeta">Protection active</div>
+        <span class="status-badge running" id="statusBadge">Active</span>
       </div>
-      
+
       <div class="summary-grid">
         <div class="summary-card">
-          <div class="summary-icon" style="background:var(--green-dim);color:var(--green)">&#x1F6E1;</div>
-          <div class="summary-label">Protected Apps</div>
+          <div class="summary-icon" style="background:var(--green-dim);color:var(--green)">🛡️</div>
+          <div class="summary-label">Protected</div>
           <div class="summary-value" id="protectedCount">0</div>
         </div>
         <div class="summary-card">
-          <div class="summary-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)">&#x1F4F1;</div>
+          <div class="summary-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)">📱</div>
           <div class="summary-label">Installed</div>
           <div class="summary-value" id="installedCount">0</div>
         </div>
+        <div class="summary-card">
+          <div class="summary-icon" style="background:rgba(251,146,60,0.12);color:var(--orange)">💤</div>
+          <div class="summary-label">Hibernated</div>
+          <div class="summary-value" id="hibernateCountHome">0</div>
+        </div>
       </div>
 
-      <!-- Stats Card -->
-      <div class="stats-card" style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:16px;">
+      <div class="stats-card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
           <div style="font-weight:700;">📊 Protection Stats</div>
           <button id="refreshStats" class="log-btn">⟳ Refresh</button>
@@ -47,31 +53,29 @@
         </div>
       </div>
 
-      <!-- Kill History -->
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:16px;">
+      <div class="kill-history-card">
         <div style="font-weight:700;margin-bottom:8px;">💀 Kill History</div>
-        <pre id="killHistoryView" style="background:#0d0d0d;border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px;font-size:11px;color:var(--text-secondary);max-height:100px;overflow-y:auto;white-space:pre-wrap;word-break:break-word;font-family:monospace;">Loading...</pre>
+        <pre id="killHistoryView" class="kill-history-view">Loading...</pre>
       </div>
 
-      <!-- Verification & Export Buttons -->
-      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
-        <button id="verifyBtn" class="btn-pill add" style="background:var(--blue);color:#fff;">✓ Verify</button>
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+        <button id="verifyBtn" class="btn-pill" style="background:var(--blue);color:#fff;">✓ Verify</button>
         <button id="exportBtn" class="btn-pill" style="background:var(--elevated);color:var(--text);">📤 Export</button>
         <button id="importBtn" class="btn-pill" style="background:var(--elevated);color:var(--text);">📥 Import</button>
       </div>
 
       <div class="section-title">System Info</div>
       <div class="info-card">
-        <div class="info-row"><span class="info-label">Device</span><span class="info-value" id="infoDevice">&#x2014;</span></div>
-        <div class="info-row"><span class="info-label">Android</span><span class="info-value" id="infoAndroid">&#x2014;</span></div>
-        <div class="info-row"><span class="info-label">OEM</span><span class="info-value" id="infoOEM">&#x2014;</span></div>
-        <div class="info-row"><span class="info-label">Kernel</span><span class="info-value" id="infoKernel">&#x2014;</span></div>
+        <div class="info-row"><span class="info-label">Device</span><span class="info-value" id="infoDevice">—</span></div>
+        <div class="info-row"><span class="info-label">Android</span><span class="info-value" id="infoAndroid">—</span></div>
+        <div class="info-row"><span class="info-label">OEM</span><span class="info-value" id="infoOEM">—</span></div>
+        <div class="info-row"><span class="info-label">Kernel</span><span class="info-value" id="infoKernel">—</span></div>
         <div class="info-row"><span class="info-label">Module</span><span class="info-value">v2.2.0</span></div>
       </div>
     </div>
   </div>
 
-  <!-- APPS -->
+  <!-- ===== APPS TAB ===== -->
   <div class="page" id="page-apps">
     <div class="content">
       <div class="search-wrap">
@@ -79,46 +83,140 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
           </svg>
-          <input type="text" id="appSearch" placeholder="Search apps or package..." autocomplete="off">
+          <input type="text" id="appSearch" placeholder="Search apps..." autocomplete="off">
         </div>
       </div>
 
-      <div class="section-title">💤 Hibernate List <span class="count-pill" id="hibernateCount">0</span></div>
-      <div class="app-list" id="hibernateList">
-        <div class="empty-state"><div class="empty-title">No hibernated apps</div><div>Add from the app list below</div></div>
+      <div class="app-tabs">
+        <button class="app-tab active" data-tab="protected" id="tabProtected">🛡️ Protected <span class="tab-badge" id="tabProtectedCount">0</span></button>
+        <button class="app-tab" data-tab="hibernated" id="tabHibernated">💤 Hibernated <span class="tab-badge" id="tabHibernatedCount">0</span></button>
+        <button class="app-tab" data-tab="all" id="tabAll">📱 All Apps</button>
       </div>
 
-      <div class="section-title">Protected Apps <span class="count-pill" id="savedCount">0</span></div>
-      <div class="app-list" id="savedList">
-        <div class="empty-state"><div class="empty-title">No protected apps</div><div>Add apps from below</div></div>
-      </div>
-
-      <div class="section-title">Installed Applications <span class="count-pill" id="appsCount">0</span></div>
-      <div class="chip-row">
-        <button class="chip" data-filter="user" id="chipUser">User</button>
-        <button class="chip" data-filter="system" id="chipSystem">System</button>
-        <button class="chip active" data-filter="all" id="chipAll">All</button>
-      </div>
-      <div class="app-list" id="appsList">
+      <div class="app-list" id="appsListContainer">
         <div class="loading-row"><span class="spinner"></span> Loading apps...</div>
       </div>
-    </div>
-  </div>
 
-  <!-- LOGS -->
-  <div class="page" id="page-logs">
-    <div class="content">
-      <div class="log-card">
-        <div class="log-header">
-          <span class="log-title">Boot Log</span>
-          <button class="log-btn" id="btnClearLog">Clear</button>
-        </div>
-        <pre class="log-view" id="logView">Loading...</pre>
+      <div class="chip-row" id="chipRow">
+        <button class="chip active" data-filter="all" id="chipAll">All</button>
+        <button class="chip" data-filter="user" id="chipUser">User</button>
+        <button class="chip" data-filter="system" id="chipSystem">System</button>
       </div>
     </div>
   </div>
 
-  <!-- BOTTOM NAV -->
+  <!-- ===== SETTINGS TAB ===== -->
+  <div class="page" id="page-settings">
+    <div class="content">
+      <!-- Schedule Settings -->
+      <div class="settings-card">
+        <div class="settings-header">
+          <span class="settings-icon">⏰</span>
+          <span class="settings-title">Schedule Re-Apply</span>
+        </div>
+        <div class="settings-body">
+          <div class="setting-row">
+            <div class="setting-label">Interval</div>
+            <div class="setting-control">
+              <select id="scheduleInterval" class="setting-select">
+                <option value="3600">1 hour</option>
+                <option value="7200">2 hours</option>
+                <option value="21600" selected>6 hours (default)</option>
+                <option value="43200">12 hours</option>
+                <option value="86400">24 hours</option>
+                <option value="0">Disabled</option>
+              </select>
+              <button id="applyScheduleBtn" class="btn-pill" style="background:var(--green);color:#000;padding:6px 16px;">Apply</button>
+            </div>
+          </div>
+          <div class="setting-status" id="scheduleStatus">Current: 6 hours</div>
+        </div>
+      </div>
+
+      <!-- Hibernate Settings -->
+      <div class="settings-card">
+        <div class="settings-header">
+          <span class="settings-icon">💤</span>
+          <span class="settings-title">Hibernate Settings</span>
+        </div>
+        <div class="settings-body">
+          <div class="setting-row">
+            <div class="setting-label">Auto-hibernate on boot</div>
+            <div class="setting-control">
+              <label class="toggle-switch">
+                <input type="checkbox" id="autoHibernateToggle" checked>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+          <div class="setting-note">When enabled, apps in the hibernate list are blocked from running in the background on boot.</div>
+        </div>
+      </div>
+
+      <!-- Batch Size Settings -->
+      <div class="settings-card">
+        <div class="settings-header">
+          <span class="settings-icon">⚡</span>
+          <span class="settings-title">Batch Processing</span>
+        </div>
+        <div class="settings-body">
+          <div class="setting-row">
+            <div class="setting-label">Apps per batch</div>
+            <div class="setting-control">
+              <select id="batchSizeSelect" class="setting-select">
+                <option value="1">1 (slowest)</option>
+                <option value="2">2</option>
+                <option value="3" selected>3 (default)</option>
+                <option value="5">5</option>
+                <option value="10">10 (fastest)</option>
+              </select>
+              <button id="applyBatchBtn" class="btn-pill" style="background:var(--green);color:#000;padding:6px 16px;">Apply</button>
+            </div>
+          </div>
+          <div class="setting-note">Higher values process apps faster but may use more CPU during boot.</div>
+        </div>
+      </div>
+
+      <!-- Safety -->
+      <div class="settings-card">
+        <div class="settings-header">
+          <span class="settings-icon">🛡️</span>
+          <span class="settings-title">Safety</span>
+        </div>
+        <div class="settings-body">
+          <div class="setting-row">
+            <div class="setting-label">Boot count</div>
+            <div class="setting-control">
+              <span id="bootCountDisplay" style="color:var(--text-secondary);">0</span>
+              <button id="resetBootCountBtn" class="btn-pill" style="background:var(--elevated);color:var(--text);padding:4px 12px;font-size:12px;">Reset</button>
+            </div>
+          </div>
+          <div class="setting-row">
+            <div class="setting-label">Safe mode</div>
+            <div class="setting-control">
+              <span id="safeModeStatus" style="color:var(--green);">Disabled</span>
+              <button id="enableSafeModeBtn" class="btn-pill" style="background:var(--red-dim);color:var(--red);padding:4px 12px;font-size:12px;">Enable</button>
+            </div>
+          </div>
+          <div class="setting-note">Safe mode disables all protection on next boot. Use if you experience bootloops.</div>
+        </div>
+      </div>
+
+      <!-- Logs -->
+      <div class="settings-card logs-card">
+        <div class="settings-header">
+          <span class="settings-icon">📋</span>
+          <span class="settings-title">Logs</span>
+          <button id="btnClearLog" class="log-btn" style="margin-left:auto;">Clear</button>
+        </div>
+        <div class="settings-body">
+          <pre class="log-view" id="logView">Loading...</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== BOTTOM NAV ===== -->
   <nav class="bottom-nav">
     <button class="nav-item active" id="navHome">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -133,12 +231,11 @@
       </svg>
       <span>Apps</span>
     </button>
-    <button class="nav-item" id="navLogs">
+    <button class="nav-item" id="navSettings">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-        <polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+        <circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
       </svg>
-      <span>Logs</span>
+      <span>Settings</span>
     </button>
   </nav>
 
